@@ -1,0 +1,89 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum OrderStatus {
+  CREATED
+  CONFIRMED
+  CANCELLED
+  DELIVERED
+}
+
+enum BudgetStatus {
+  CREATED
+  CONFIRMED
+  CANCELLED
+}
+
+model Supplier {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  name      String
+  orders    Order[]
+  budgets   Budget[]
+}
+
+model Budget {
+  id         String       @id @default(uuid())
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+  total      Int?
+  supplier   Supplier     @relation(fields: [supplierId], references: [id])
+  supplierId String
+  status     BudgetStatus @default(CREATED)
+  items      BudgetItem[]
+}
+
+model BudgetItem {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  quantity  Int
+  productName String
+  budget    Budget   @relation(fields: [budgetId], references: [id])
+  budgetId  String
+}
+
+model Order {
+  id        String      @id @default(uuid())
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  status    OrderStatus @default(CREATED)
+  items     OrderItem[]
+
+  customerId String
+
+  supplier   Supplier @relation(fields: [supplierId], references: [id])
+  supplierId String
+
+  invoice Invoice?
+}
+
+model OrderItem {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  quantity  Int
+  price     Int
+  productId String
+  Order     Order?   @relation(fields: [orderId], references: [id])
+  orderId   String?
+}
+
+model Invoice {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  total     Int
+  order     Order    @relation(fields: [orderId], references: [id])
+  orderId   String   @unique
+}
